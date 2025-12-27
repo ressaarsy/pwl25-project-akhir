@@ -5,117 +5,101 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Kembali
       </button>
-      <div class="header-actions">
-        <button class="icon-btn edit" @click="openEditModal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-        <button class="icon-btn delete" @click="confirmDelete"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-      </div>
     </div>
     
-    <h1 class="page-title">Detail Tugas</h1>
-    <div v-if="isLoading" class="loading-container"><p>Memuat...</p></div>
+    <div v-if="isLoading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Memuat data...</p>
+    </div>
 
     <div v-else class="content-wrapper">
       <div class="info-card main-card">
-        <div class="tag-row"><span class="tag-category">{{ task.category || 'General' }}</span></div>
+        <div class="top-meta">
+            <span class="tag-category">{{ task.category || 'General' }}</span>
+            <span :class="['status-pill', getStatusClass(task.status)]">{{ task.status }}</span>
+        </div>
         <h2 class="task-title-detail">{{ task.title }}</h2>
-        <div class="deadline-section">
-          <div class="deadline-box">
-            <div class="icon-box">📅</div>
-            <div class="deadline-info"><span class="label">Deadline</span><span class="date-value">{{ formatDate(task.deadline) }}</span></div>
-          </div>
-          <div v-if="getDeadlineStatus(task) === 'overdue'" class="warning-alert overdue">⚠️ Tugas ini sudah melewati deadline</div>
-          <div v-else-if="getDeadlineStatus(task) === 'urgent'" class="warning-alert urgent">🔥 Deadline segera berakhir!</div>
+        <p class="description-text">{{ task.description || 'Tidak ada deskripsi.' }}</p>
+      </div>
+
+      <div class="info-card highlight-card">
+        <div class="progress-header">
+            <span class="section-title mb-0">Kelengkapan Tugas</span>
+            <span class="percent-text">{{ progressPercentage }}%</span>
+        </div>
+        
+        <div class="progress-track">
+            <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-label">Langkah Selesai</span>
+                <span class="stat-val">{{ completedCount }} / {{ subtasks.length }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Estimasi</span>
+                <span class="stat-val">{{ totalMinutes }} Menit</span>
+            </div>
         </div>
       </div>
 
-      <div class="info-card"><h3 class="section-title">Deskripsi</h3><p class="description-text">{{ task.description || 'Tidak ada deskripsi.' }}</p></div>
-
       <div class="info-card">
-        <h3 class="section-title">Progress Status</h3>
-        <div class="stepper-container">
-          <div class="step-circle active">1</div>
-          <div :class="['step-line', { active: task.status !== 'To Do' }]"></div>
-          <div :class="['step-circle', { active: task.status === 'In Progress' || task.status === 'Done' }]">2</div>
-          <div :class="['step-line', { active: task.status === 'Done' }]"></div>
-          <div :class="['step-circle', { active: task.status === 'Done' }]">3</div>
+        <h3 class="section-title">Rincian Langkah (Subtasks)</h3>
+        
+        <div v-if="subtasks.length > 0" class="subtask-list">
+            <div 
+                v-for="sub in subtasks" 
+                :key="sub.id" 
+                :class="['subtask-item', { 'is-done': sub.is_completed }]"
+                @click="toggleSubtask(sub)"
+            >
+                <div class="checkbox-area">
+                    <div :class="['custom-checkbox', { 'checked': sub.is_completed }]">
+                        <span v-if="sub.is_completed">✓</span>
+                    </div>
+                </div>
+                
+                <div class="sub-info">
+                    <span class="sub-title">{{ sub.title }}</span>
+                    <div class="sub-meta">
+                        <span v-if="sub.estimated_minutes" class="meta-tag">⏱ {{ sub.estimated_minutes }} mnt</span>
+                        <span v-if="sub.target_date" class="meta-tag">📅 {{ formatDateSimple(sub.target_date) }}</span>
+                    </div>
+                </div>
+
+                <button @click.stop="deleteSubtask(sub.id)" class="sub-delete" title="Hapus Langkah">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
         </div>
-        <div class="stepper-labels"><span>To Do</span><span>Process</span><span>Done</span></div>
+        <p v-else class="empty-sub">Belum ada langkah kecil. Tambahkan di bawah ini.</p>
+
+        <div class="add-subtask-box">
+            <input v-model="newSubtask.title" placeholder="Ketik langkah baru..." class="input-sub main" @keyup.enter="addSubtask" />
+            <div class="sub-extras">
+                <div class="input-group">
+                    <span class="input-icon">⏱</span>
+                    <input v-model="newSubtask.minutes" type="number" placeholder="Menit" class="input-sub mini" />
+                </div>
+                <div class="input-group">
+                    <span class="input-icon">📅</span>
+                    <input v-model="newSubtask.date" type="date" class="input-sub mini" />
+                </div>
+                <button @click="addSubtask" class="btn-add-sub">Tambah</button>
+            </div>
+        </div>
       </div>
 
       <div class="info-card action-card">
-        <h3 class="section-title">Update Status</h3>
-        <button v-if="task.status !== 'To Do'" @click="updateStatus('To Do')" class="btn-action btn-gray">Ubah ke To Do</button>
-        <button v-if="task.status !== 'In Progress'" @click="updateStatus('In Progress')" class="btn-action btn-blue">Ubah ke Process</button>
-        <div class="current-status-badge"><span v-if="task.status === 'Done'">✓</span> Status Saat Ini: <strong>{{ task.status }}</strong></div>
-        <button v-if="task.status !== 'Done'" @click="updateStatus('Done')" class="btn-action btn-green">Ubah ke Done</button>
-      </div>
-
-      <div class="info-card">
-        <h3 class="section-title">Catatan Progress</h3>
-        <ul class="history-list">
-            <li><span class="bullet gray"></span><div>Tugas dibuat pada <br><span class="history-date">{{ formatDate(task.created_at) }}</span></div></li>
-            <li><span :class="['bullet', getStatusColor(task.status)]"></span><div>Status terakhir: <strong>{{ task.status }}</strong></div></li>
-        </ul>
-      </div>
-    </div>
-
-    <div v-if="showEditModal" class="modal-overlay">
-      <div class="modal-content animate-pop">
-        <div class="modal-header">
-            <h3 class="modal-title">Edit Tugas</h3>
-            <button class="close-btn" @click="showEditModal = false">×</button>
-        </div>
-
-        <div class="form-group">
-            <label>Judul</label>
-            <input v-model="editForm.title" class="input-field" />
-        </div>
-
-        <div class="form-row">
-            <div class="form-group half">
-                <label>Kategori</label>
-                <div class="select-wrapper">
-                    <select v-model="editForm.category" class="input-field select-field">
-                        <option>Design</option>
-                        <option>Development</option>
-                        <option>Marketing</option>
-                        <option>Personal</option>
-                        <option>General</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group half">
-                <label>Deadline</label>
-                <input type="date" v-model="editForm.deadline" class="input-field date-field" />
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Deskripsi</label>
-            <textarea v-model="editForm.description" class="input-field area"></textarea>
-        </div>
-
-        <div class="modal-actions">
-            <button @click="showEditModal = false" class="btn-text">Batal</button>
-            <button @click="saveEdit" class="btn-primary-full">Simpan Perubahan</button>
+        <h3 class="section-title">Kontrol Status Manual</h3>
+        <div class="btn-group">
+            <button v-if="task.status !== 'To Do'" @click="updateStatus('To Do')" class="btn-action btn-gray">Kembalikan ke To Do</button>
+            <button v-if="task.status !== 'In Progress'" @click="updateStatus('In Progress')" class="btn-action btn-blue">Tandai Process</button>
+            <button v-if="task.status !== 'Done'" @click="updateStatus('Done')" class="btn-action btn-green">Tandai Selesai</button>
         </div>
       </div>
     </div>
-
-    <nav class="bottom-nav">
-      <div class="nav-item" @click="$router.push('/')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-        <span class="nav-label">Home</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/performance')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-        <span class="nav-label">Performa</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/profile')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        <span class="nav-label">Profile</span>
-      </div>
-    </nav>
   </div>
 </template>
 
@@ -128,71 +112,132 @@ export default {
   data() {
     return {
       task: {},
-      isLoading: true,
-      showEditModal: false,
-      editForm: { title: '', description: '', category: '', deadline: '' }
+      subtasks: [],
+      newSubtask: { title: '', minutes: '', date: '' },
+      isLoading: true
     };
   },
-  created() { this.fetchTaskDetail(); },
-  methods: {
-    async fetchTaskDetail() {
-      const taskId = this.$route.params.id;
-      const token = localStorage.getItem('userToken');
-      try {
-        const response = await axios.get(`${API_URL}/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
-        this.task = response.data;
-      } catch (err) { alert("Gagal memuat tugas"); this.$router.push('/'); } finally { this.isLoading = false; }
+  // --- LOGIKA CERDAS (Progress Bar & Total Waktu) ---
+  computed: {
+    progressPercentage() {
+        if (this.subtasks.length === 0) return 0;
+        const completed = this.subtasks.filter(s => s.is_completed).length;
+        return Math.round((completed / this.subtasks.length) * 100);
     },
+    totalMinutes() {
+        return this.subtasks.reduce((total, sub) => total + (parseInt(sub.estimated_minutes) || 0), 0);
+    },
+    completedCount() {
+        return this.subtasks.filter(s => s.is_completed).length;
+    }
+  },
+  created() { 
+      this.fetchTaskDetail(); 
+      this.fetchSubtasks(); 
+  },
+  methods: {
+    getToken() { return localStorage.getItem('userToken'); },
+    
+    async fetchTaskDetail() {
+      try {
+        const response = await axios.get(`${API_URL}/tasks/${this.$route.params.id}`, { 
+            headers: { Authorization: `Bearer ${this.getToken()}` } 
+        });
+        this.task = response.data;
+      } catch (err) { this.$router.push('/'); } finally { this.isLoading = false; }
+    },
+
+    async fetchSubtasks() {
+        try {
+            const taskId = this.$route.params.id;
+            const res = await axios.get(`${API_URL}/subtasks/${taskId}`, {
+                headers: { Authorization: `Bearer ${this.getToken()}` }
+            });
+            this.subtasks = res.data;
+        } catch (err) { console.error("Gagal ambil subtask"); }
+    },
+
+    async addSubtask() {
+        if (!this.newSubtask.title) return alert("Judul langkah wajib diisi!");
+        try {
+            await axios.post(`${API_URL}/subtasks`, {
+                task_id: this.task.id,
+                title: this.newSubtask.title,
+                estimated_minutes: this.newSubtask.minutes,
+                target_date: this.newSubtask.date
+            }, { headers: { Authorization: `Bearer ${this.getToken()}` } });
+            
+            this.newSubtask = { title: '', minutes: '', date: '' };
+            this.fetchSubtasks(); 
+            
+            // Auto Update Status ke "In Progress" jika baru mulai
+            if (this.task.status === 'To Do') this.updateStatus('In Progress');
+
+        } catch (err) { alert("Gagal tambah subtask"); }
+    },
+
+    async toggleSubtask(sub) {
+        // Optimistic Update (Update UI dulu biar cepat rasanya)
+        const oldState = sub.is_completed;
+        sub.is_completed = !oldState; // Ubah nilai lokal (0 jadi 1, atau 1 jadi 0)
+        
+        try {
+            await axios.patch(`${API_URL}/subtasks/${sub.id}`, { 
+                is_completed: sub.is_completed 
+            }, { headers: { Authorization: `Bearer ${this.getToken()}` } });
+            
+            // Cek Otomatisasi Status
+            this.checkAutoStatus(); 
+
+        } catch (err) { 
+            sub.is_completed = oldState; // Kembalikan jika error
+            alert("Gagal update koneksi buruk"); 
+        }
+    },
+
+    // Logika Otomatis Status Parent
+    checkAutoStatus() {
+        const total = this.subtasks.length;
+        const done = this.subtasks.filter(s => s.is_completed).length; // Hitung ulang dari data lokal
+
+        if (total > 0 && total === done && this.task.status !== 'Done') {
+            // Jika semua checklist selesai -> Auto Done
+            this.updateStatus('Done');
+            alert("🎉 Selamat! Semua langkah selesai. Tugas ditandai Selesai.");
+        } else if (done < total && this.task.status === 'Done') {
+            // Jika ada yang di-uncheck -> Balik ke In Progress
+            this.updateStatus('In Progress');
+        }
+    },
+
+    async deleteSubtask(id) {
+        if(confirm("Hapus langkah ini?")) {
+            try {
+                await axios.delete(`${API_URL}/subtasks/${id}`, { 
+                    headers: { Authorization: `Bearer ${this.getToken()}` } 
+                });
+                this.subtasks = this.subtasks.filter(s => s.id !== id);
+                this.checkAutoStatus(); // Cek status lagi setelah hapus
+            } catch(err) { alert("Gagal hapus"); }
+        }
+    },
+
     async updateStatus(newStatus) {
       try {
-        const token = localStorage.getItem('userToken');
-        await axios.patch(`${API_URL}/tasks/${this.task.id}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.patch(`${API_URL}/tasks/${this.task.id}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${this.getToken()}` } });
         this.task.status = newStatus;
-      } catch (err) { alert("Gagal update status"); }
+      } catch (err) { console.error(err); }
     },
-    async confirmDelete() {
-      if(confirm("Hapus tugas ini?")) {
-        try {
-            const token = localStorage.getItem('userToken');
-            await axios.delete(`${API_URL}/tasks/${this.task.id}`, { headers: { Authorization: `Bearer ${token}` } });
-            this.$router.push('/'); 
-        } catch (err) { alert("Gagal menghapus"); }
-      }
+    
+    formatDateSimple(dateStr) {
+        if(!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
     },
-    openEditModal() {
-        let formattedDate = '';
-        if (this.task.deadline) formattedDate = new Date(this.task.deadline).toISOString().split('T')[0];
-        this.editForm = { title: this.task.title, description: this.task.description, category: this.task.category, deadline: formattedDate };
-        this.showEditModal = true;
-    },
-    async saveEdit() {
-        try {
-            const token = localStorage.getItem('userToken');
-            await axios.put(`${API_URL}/tasks/${this.task.id}`, this.editForm, { headers: { Authorization: `Bearer ${token}` } });
-            this.task.title = this.editForm.title;
-            this.task.description = this.editForm.description;
-            this.task.category = this.editForm.category;
-            this.task.deadline = this.editForm.deadline;
-            this.showEditModal = false;
-        } catch (err) { alert("Gagal menyimpan"); }
-    },
-    getDeadlineStatus(task) {
-        if (task.status === 'Done') return 'safe';
-        const deadline = new Date(task.deadline);
-        const today = new Date(); today.setHours(0, 0, 0, 0); deadline.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24)); 
-        if (diffDays < 0) return 'overdue';
-        if (diffDays >= 0 && diffDays <= 3) return 'urgent';
-        return 'safe';
-    },
-    getStatusColor(status) {
-        if (status === 'Done') return 'green';
-        if (status === 'In Progress') return 'blue';
-        return 'gray';
-    },
-    formatDate(dateString) {
-      if (!dateString) return '-';
-      return new Date(dateString).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    getStatusClass(status) {
+        if (status === 'Done') return 'pill-green';
+        if (status === 'In Progress') return 'pill-blue';
+        return 'pill-gray';
     }
   }
 };
@@ -200,127 +245,93 @@ export default {
 
 <style scoped>
 .detail-container { min-height: 100vh; background: #03061A; color: white; padding: 24px 20px 120px 20px; font-family: 'Segoe UI', sans-serif; }
-.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.back-btn { background: none; border: none; color: #8C96A8; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.header-row { margin-bottom: 20px; }
+.back-btn { background: none; border: none; color: #8C96A8; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: 0.2s; }
 .back-btn:hover { color: white; }
-.header-actions { display: flex; gap: 10px; }
-.icon-btn { background: #121629; border: 1px solid rgba(255,255,255,0.05); color: #8C96A8; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.icon-btn.edit:hover { background: #007bff; border-color: #007bff; color: white; }
-.icon-btn.delete:hover { background: #e74c3c; border-color: #e74c3c; color: white; }
-.page-title { font-size: 22px; font-weight: 600; margin: 0 0 20px 0; }
-.info-card { background: #121629; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); }
-.tag-category { font-size: 11px; color: #8C96A8; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.task-title-detail { font-size: 20px; margin: 16px 0; font-weight: 700; line-height: 1.4; }
-.deadline-section { display: flex; flex-direction: column; gap: 12px; }
-.deadline-box { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 12px; }
-.icon-box { width: 40px; height: 40px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 18px; }
-.deadline-info { display: flex; flex-direction: column; }
-.label { font-size: 11px; color: #8C96A8; }
-.date-value { font-size: 14px; font-weight: bold; }
-.warning-alert { padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; }
-.warning-alert.overdue { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.2); }
-.warning-alert.urgent { background: rgba(230, 126, 34, 0.1); color: #e67e22; border: 1px solid rgba(230, 126, 34, 0.2); }
-.section-title { font-size: 14px; color: white; margin-bottom: 16px; font-weight: 600; }
-.description-text { font-size: 14px; color: #8C96A8; line-height: 1.6; }
-.stepper-container { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 10px 0; position: relative; }
-.step-circle { width: 32px; height: 32px; border-radius: 50%; background: #121629; color: #565E75; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 2; border: 2px solid #2A3042; font-size: 14px; }
-.step-circle.active { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); }
-.step-line { flex: 1; height: 2px; background: #2A3042; margin: 0 5px; }
-.step-line.active { background: #007bff; }
-.stepper-labels { display: flex; justify-content: space-between; font-size: 11px; color: #565E75; font-weight: 500; }
-.action-card { display: flex; flex-direction: column; gap: 12px; }
-.btn-action { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; font-size: 14px; transition: 0.2s; }
-.btn-gray { background: #2A3042; color: #8C96A8; } 
-.btn-blue { background: #007bff; color: white; } 
-.btn-green { background: #2ECC71; color: #003311; } 
-.current-status-badge { background: rgba(255,255,255,0.03); color: #8C96A8; padding: 14px; border-radius: 10px; text-align: center; font-size: 13px; border: 1px dashed #565E75; }
-.history-list { list-style: none; padding: 0; margin: 0; }
-.history-list li { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 13px; color: #8C96A8; position: relative; }
-.history-list li:not(:last-child)::after { content: ''; position: absolute; left: 5px; top: 20px; width: 2px; height: calc(100% - 4px); background: #2A3042; }
-.history-date { display: block; margin-top: 4px; font-weight: 600; color: #ccc; }
-.bullet { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; z-index: 2; }
-.bullet.gray { background: #565E75; border: 2px solid #121629; }
-.bullet.blue { background: #007bff; border: 2px solid #121629; box-shadow: 0 0 8px rgba(0,123,255,0.5); }
-.bullet.green { background: #2ECC71; border: 2px solid #121629; box-shadow: 0 0 8px rgba(46, 204, 113, 0.5); }
 
-/* STYLE NAVIGASI BARU */
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: rgba(18, 22, 41, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { display: flex; flex-direction: column; align-items: center; color: #565E75; gap: 6px; cursor: pointer; transition: 0.3s; width: 60px; }
-.nav-icon { width: 24px; height: 24px; stroke: #565E75; transition: 0.3s; }
-.nav-label { font-size: 10px; font-weight: 500; }
-.nav-item.active { color: #007bff; }
-.nav-item.active .nav-icon { stroke: #007bff; filter: drop-shadow(0 0 5px rgba(0,123,255,0.4)); }
+/* Cards Styling */
+.info-card { background: #121629; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+.highlight-card { background: linear-gradient(145deg, #121629 0%, #1a2035 100%); border: 1px solid rgba(59, 130, 246, 0.2); }
 
-/* === NEW MODAL STYLE (Sama persis dengan Dashboard) === */
-.modal-overlay { 
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-  background: rgba(0, 0, 0, 0.6); 
-  backdrop-filter: blur(8px);
-  display: flex; justify-content: center; align-items: center; z-index: 200; 
-  animation: fadeIn 0.2s ease-out;
+/* Header Info */
+.top-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.tag-category { font-size: 11px; background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+.status-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase; }
+.pill-green { background: rgba(46, 204, 113, 0.15); color: #2ECC71; }
+.pill-blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.pill-gray { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.task-title-detail { font-size: 22px; margin: 0 0 10px 0; font-weight: 700; line-height: 1.3; }
+.description-text { color: #8C96A8; font-size: 14px; line-height: 1.6; }
+
+/* Progress Section */
+.progress-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+.section-title { font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 0; }
+.percent-text { font-size: 24px; font-weight: 800; color: #3b82f6; line-height: 1; }
+.progress-track { height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+.progress-fill { height: 100%; background: #3b82f6; border-radius: 4px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+.stats-row { display: flex; gap: 20px; }
+.stat-item { display: flex; flex-direction: column; }
+.stat-label { font-size: 10px; color: #8C96A8; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-val { font-size: 14px; font-weight: 600; color: white; margin-top: 2px; }
+
+/* --- FIXED SUBTASK LIST STYLE --- */
+.subtask-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.subtask-item { 
+    display: flex; align-items: center; gap: 12px; 
+    background: rgba(255,255,255,0.05); /* Latar lebih terang */
+    padding: 16px; border-radius: 12px; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    transition: 0.2s; cursor: pointer; /* Pointer Hand */
 }
+.subtask-item:hover { background: rgba(255,255,255,0.1); border-color: #3b82f6; }
 
-.modal-content { 
-  background: #1e293b;
-  padding: 24px; 
-  border-radius: 20px; 
-  width: 90%; max-width: 420px; 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+/* Custom Checkbox Style */
+.checkbox-area { display: flex; align-items: center; }
+.custom-checkbox {
+    width: 24px; height: 24px; border-radius: 6px;
+    border: 2px solid #565E75; background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: bold; font-size: 14px; transition: 0.2s;
 }
-
-.animate-pop { animation: popUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-
-/* Header Modal */
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.modal-title { margin: 0; font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.5px; }
-.close-btn { background: none; border: none; font-size: 24px; color: #8C96A8; cursor: pointer; line-height: 1; padding: 0; }
-.close-btn:hover { color: white; }
-
-/* Forms */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; }
-.form-row { display: flex; gap: 12px; }
-.half { flex: 1; }
-
-.input-field { 
-  width: 100%; padding: 12px 16px; 
-  border-radius: 12px; 
-  background: #0f172a; 
-  border: 1px solid #334155; 
-  color: white; 
-  box-sizing: border-box; 
-  font-family: inherit; font-size: 14px;
-  transition: all 0.2s;
+.custom-checkbox.checked {
+    background: #3b82f6; border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
-.input-field:focus { 
-  border-color: #3b82f6; 
-  outline: none; 
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); 
-}
-.input-field.area { height: 100px; resize: none; }
+/* Style saat Selesai */
+.subtask-item.is-done { opacity: 0.6; }
+.subtask-item.is-done .sub-title { text-decoration: line-through; color: #94a3b8; }
 
-/* Select Arrow Customization */
-.select-wrapper { position: relative; }
-.select-wrapper::after {
-    content: '▼'; font-size: 10px; color: #8C96A8;
-    position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none;
-}
-.select-field { appearance: none; cursor: pointer; }
+.sub-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.sub-title { font-size: 16px; font-weight: 500; }
+.sub-meta { display: flex; gap: 8px; }
+.meta-tag { font-size: 11px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; color: #cbd5e1; }
 
-/* Actions */
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
-.btn-text { background: none; border: none; color: #94a3b8; font-weight: 600; cursor: pointer; padding: 12px 16px; }
-.btn-text:hover { color: white; }
-.btn-primary-full { 
-    background: #3b82f6; color: white; border: none; 
-    padding: 12px 24px; border-radius: 12px; 
-    font-weight: 600; cursor: pointer; 
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: 0.2s;
+.sub-delete { 
+    background: rgba(239, 68, 68, 0.1); border: none; 
+    color: #ef4444; cursor: pointer; padding: 8px; border-radius: 6px; transition: 0.2s; 
 }
-.btn-primary-full:hover { background: #2563eb; transform: translateY(-1px); }
+.sub-delete:hover { background: #ef4444; color: white; }
 
-/* Animation Keyframes */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes popUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* Add Form */
+.add-subtask-box { display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; }
+.input-sub { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; font-size: 13px; outline: none; transition: 0.2s; }
+.input-sub:focus { border-color: #3b82f6; }
+.sub-extras { display: flex; gap: 8px; }
+.input-group { position: relative; flex: 1; }
+.input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; pointer-events: none; }
+.input-sub.mini { width: 100%; padding-left: 30px; box-sizing: border-box; }
+.btn-add-sub { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: 0 16px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px; }
+.btn-add-sub:hover { background: #2563eb; }
+
+/* Buttons Action */
+.btn-group { display: flex; gap: 10px; margin-top: 8px; }
+.btn-action { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; }
+.btn-gray { background: #334155; color: #cbd5e1; } .btn-gray:hover { background: #475569; }
+.btn-blue { background: #3b82f6; color: white; } .btn-blue:hover { background: #2563eb; }
+.btn-green { background: #22c55e; color: #0f172a; } .btn-green:hover { background: #16a34a; }
+
+.empty-sub { color: #64748b; font-size: 13px; text-align: center; margin: 20px 0; font-style: italic; }
+.loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #94a3b8; gap: 10px; }
+.spinner { width: 30px; height: 30px; border: 3px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

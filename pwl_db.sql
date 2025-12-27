@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 22, 2025 at 12:31 AM
+-- Generation Time: Dec 27, 2025 at 09:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -20,6 +20,31 @@ SET time_zone = "+00:00";
 --
 -- Database: `pwl_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `subtasks`
+--
+
+CREATE TABLE `subtasks` (
+  `id` int(11) NOT NULL,
+  `task_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `is_completed` tinyint(1) DEFAULT 0,
+  `estimated_minutes` int(11) DEFAULT 0,
+  `target_date` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `subtasks`
+--
+
+INSERT INTO `subtasks` (`id`, `task_id`, `title`, `is_completed`, `estimated_minutes`, `target_date`, `created_at`) VALUES
+(3, 33, 'apace', 1, 10, '2025-12-29', '2025-12-27 19:58:57'),
+(4, 33, 'apakah', 1, 12, '2025-12-23', '2025-12-27 19:59:19'),
+(5, 34, 'qssq', 1, 20, '2025-12-26', '2025-12-27 20:01:05');
 
 -- --------------------------------------------------------
 
@@ -44,25 +69,9 @@ CREATE TABLE `tasks` (
 --
 
 INSERT INTO `tasks` (`id`, `user_id`, `title`, `description`, `is_completed`, `created_at`, `status`, `deadline`, `category`) VALUES
-(11, 1, 'aaa', 'aaa', 0, '2025-12-21 15:49:10', 'In Progress', '2025-12-21', 'Design'),
-(12, 1, 'bbb', 'bbb', 1, '2025-12-21 15:49:50', 'Done', '2025-12-22', 'General'),
-(13, 1, 'ccc', 'ccc', 0, '2025-12-21 15:53:00', 'In Progress', '2025-11-30', 'Development'),
-(14, 1, 'ddd', 'sss', 0, '2025-12-21 15:53:38', 'In Progress', '2025-12-28', 'Marketing'),
-(15, 1, 'sss', 'sss', 1, '2025-12-21 15:54:32', 'Done', '2025-12-12', 'Personal'),
-(17, 1, 'rrrr', 'aaaaa', 0, '2025-12-21 16:53:49', 'To Do', '2025-11-12', 'Marketing'),
-(18, 1, 'asd', 'addd', 0, '2025-12-21 17:37:08', 'To Do', '2025-12-25', 'Marketing'),
 (19, 6, 'sdad', 'dsd', 0, '2025-12-21 17:57:29', 'To Do', '2025-11-22', 'Development'),
-(20, 1, 'zdfzd', 'hdsjhjkshk', 0, '2025-12-21 18:33:39', 'In Progress', '2025-12-22', 'Personal'),
-(21, 1, 'sassf', '', 1, '2025-12-21 18:34:01', 'Done', '2025-12-22', 'Marketing'),
-(22, 1, 'dfsd', 'daSD', 1, '2025-12-21 18:34:21', 'Done', '2025-12-23', 'Marketing'),
-(23, 1, 'DFSA', 'dada', 1, '2025-12-21 18:37:51', 'Done', '2025-12-28', 'Development'),
-(24, 1, 'fryty', '', 0, '2025-12-21 18:38:14', 'In Progress', '2025-12-27', 'Development'),
-(25, 1, 'dada', 'dda', 0, '2025-12-21 18:38:41', 'In Progress', '2025-12-27', 'Marketing'),
-(26, 1, 'DASD', '', 1, '2025-12-21 18:39:02', 'Done', '2025-12-27', 'Development'),
-(27, 1, 'DSD', '', 0, '2025-12-21 18:39:29', 'In Progress', '2025-12-26', 'Development'),
-(28, 1, 'DAD', 'ASA', 1, '2025-12-21 18:39:47', 'Done', '2025-12-26', 'Development'),
-(29, 1, 'DSAD', 'SDS', 1, '2025-12-21 18:40:15', 'Done', '2025-12-26', 'Personal'),
-(30, 1, 'asd', 'ass', 1, '2025-12-21 18:40:35', 'Done', '2025-12-26', 'Development');
+(33, 1, 'apa', 'saya', 1, '2025-12-27 19:58:06', 'Done', '2025-12-29', 'Design'),
+(34, 1, 'jahsja', 'snasn', 1, '2025-12-27 20:00:20', 'Done', '2025-12-27', 'Development');
 
 -- --------------------------------------------------------
 
@@ -91,6 +100,13 @@ INSERT INTO `users` (`id`, `nama`, `email`, `password`, `created_at`) VALUES
 --
 
 --
+-- Indexes for table `subtasks`
+--
+ALTER TABLE `subtasks`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `task_id` (`task_id`);
+
+--
 -- Indexes for table `tasks`
 --
 ALTER TABLE `tasks`
@@ -109,10 +125,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `subtasks`
+--
+ALTER TABLE `subtasks`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -123,6 +145,12 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `subtasks`
+--
+ALTER TABLE `subtasks`
+  ADD CONSTRAINT `subtasks_ibfk_1` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `tasks`

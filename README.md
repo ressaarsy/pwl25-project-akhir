@@ -19,31 +19,42 @@ Pada sisi **frontend**, aplikasi dibangun sebagai Single Page Application (SPA) 
 <img width="1146" height="723" alt="gambar" src="https://github.com/user-attachments/assets/e80fa13e-51a9-455e-ba9e-b666a9dcfed6" />
 
 ## Daftar Endpoint 
-**1. AUTH**
+**📌 API Endpoints**
+Base URL
+```bash
+http://localhost:3000/api
+```
+**🔐 Authentication**
+- POST /register : Registrasi user baru
+- POST /login : Login user dan mendapatkan token
 
-POST   /api/auth/register
+**👤 User**
+- GET /profile : Mengambil data profil user yang sedang login
 
-POST   /api/auth/login
+**✅ Task**
+- GET /tasks: Mengambil semua tugas
+- GET /tasks/{id}: Mengambil detail tugas berdasarkan ID
+- POST /tasks: Menambahkan tugas baru
+- PUT /tasks/{id}: Mengubah data tugas
+- DELETE /tasks/{id}: Menghapus tugas
+- PATCH /tasks/{id}/status: Mengubah status tugas (To Do, In Progress, Done)
 
-GET    /api/auth/profile-data
+**🧩Subtask**
+- GET /subtasks/{taskId}: Mengambil subtask berdasarkan task
+- POST /subtasks: Menambahkan subtask ke dalam task
+- PATCH /subtasks/{id}: Update status subtask (checked / unchecked)
+- DELETE /subtasks/{id}: Menghapus subtask
 
-**2. TUGAS (TASKS – CRUD)**
+**📊 Performance**
+- GET /tasks/stats: Mengambil statistik performa mingguan
 
-GET    /api/tasks
+**🔑 Authorization**
 
-POST   /api/tasks
-
-PUT    /api/tasks/:id
-
-DELETE /api/tasks/:id
-
-**3. SUB TUGAS (SUBTASKS)**
-
-POST   /api/tasks/:taskId/subtasks
-
-PATCH  /api/subtasks/:id
-
-DELETE /api/subtasks/:id
+Semua endpoint (kecuali register dan login) membutuhkan header:
+Base URL
+```bash
+Authorization: Bearer <JWT_TOKEN>
+```
 
 ## Entity Relationship Diagram
 

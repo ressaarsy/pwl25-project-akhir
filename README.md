@@ -56,57 +56,63 @@ Base URL
 ```bash
 http://localhost:3000/api
 ```
-1. app.use('/api/auth', authRoutes)``` dengan endpoint:
-   - ```router.post('/register', register)```
+1. ```app.use('/api/auth', authRoutes)``` dengan endpoint:
+   - ```router.post('/register', AuthController.register)```
      
      URL: http://localhost:3000/api/auth/register
      
      Deskripsi: Mendaftarkan akun pengguna baru.
      
-   - router.post('/login', login)```
+   - ```router.post('/login', AuthController.login)```
      
      URL: http://localhost:3000/api/auth/login
      
      Deskripsi: Login pengguna untuk mendapatkan Token JWT.
      
-   - router.get('/profile-data', verifyToken, getUserProfile)
+   - ```router.get('/profile-data', verifyToken, AuthController.getProfileData)```
      
      URL: http://localhost:3000/api/auth/profile-data
      
      Deskripsi: Mengambil data profil user (Protected Route).
 
 2. ```app.use('/api/tasks', taskRoutes)``` dengan endpoint:
-   - ```router.get('/stats', verifyToken, getTaskStats)```
-     
-     URL: http://localhost:3000/api/tasks/stats
-     
-     Deskripsi: Mengambil data statistik performa mingguan untuk grafik.
-   
-   - ```router.get('/', verifyToken, getAllTasks)```
+   - ```router.get('/', TaskController.getAllTasks)```
 
      URL: http://localhost:3000/api/tasks
 
      Deskripsi: Mengambil daftar semua tugas milik user.
    
-   - ```router.post('/', verifyToken, createTask)```
+   - ```router.post('/', TaskController.createTask)```
 
      URL: http://localhost:3000/api/tasks
 
      Deskripsi: Membuat tugas baru.
 
-   - ```router.put('/:id', verifyToken, updateTask)```
+   - ```router.get('/stats', TaskController.getTaskStats)```
+     
+     URL: http://localhost:3000/api/tasks/stats
+     
+     Deskripsi: Mengambil data statistik performa mingguan untuk grafik.
+
+   - ```router.get('/:id', TaskController.getTaskById)```
+
+     URL: http://localhost:3000/api/tasks/{id}
+
+     Deskripsi: Mengambil detail data satu tugas secara spesifik berdasarkan ID.
+
+   - ```router.put('/:id', TaskController.updateTask)```
 
      URL: http://localhost:3000/api/tasks/{id}
 
      Deskripsi: Mengupdate data tugas secara lengkap (Judul, Deskripsi, dll).
 
-   - ```router.patch('/:id/status', verifyToken, updateStatus)```
+   - ```router.patch('/:id/status', TaskController.updateStatus)```
 
      URL: http://localhost:3000/api/tasks/{id}/status
 
      Deskripsi: Quick update untuk mengubah status tugas saja.
 
-   - ```router.delete('/:id', verifyToken, deleteTask)```
+   - ```router.delete('/:id', TaskController.deleteTask)```
 
      URL: http://localhost:3000/api/tasks/{id}
 
@@ -114,25 +120,25 @@ http://localhost:3000/api
 
 3. ```app.use('/api/subtasks', subtaskRoutes)``` dengan endpoint:
 
-   - ```router.get('/:taskId', verifyToken, getSubtasksByTask)```
+   - ```router.get('/:taskId', SubtaskController.getSubtasksByTask)```
 
      URL: http://localhost:3000/api/subtasks/{taskId}
 
      Deskripsi: Melihat daftar sub-tugas berdasarkan ID Tugas Utama.
 
-   - ```router.post('/', verifyToken, createSubtask)```
+   - ```router.post('/', SubtaskController.createSubtask)```
 
      URL: http://localhost:3000/api/subtasks
 
      Deskripsi: Menambahkan sub-tugas baru.
 
-   - ```router.patch('/:id', verifyToken, toggleSubtask)```
+   - ```router.patch('/:id', SubtaskController.toggleSubtask)```
 
      URL: http://localhost:3000/api/subtasks/{id}
 
      Deskripsi: Mengubah status checklist sub-tugas (Selesai/Belum).
    
-   - ```router.delete('/:id', verifyToken, deleteSubtask)```
+   - ```router.delete('/:id', SubtaskController.deleteSubtask)```
 
      URL: http://localhost:3000/api/subtasks/{id}
 

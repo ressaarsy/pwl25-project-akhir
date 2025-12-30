@@ -9,9 +9,6 @@ router.get('/', TaskController.getAllTasks);
 router.post('/', TaskController.createTask);
 router.get('/stats', TaskController.getTaskStats);
 
-// RUTE BARU UNTUK PROFILE
-router.get('/profile-data', TaskController.getUserProfile); 
-
 router.get('/:id', TaskController.getTaskById);
 router.patch('/:id/status', TaskController.updateStatus);
 router.put('/:id', TaskController.updateTask);
